@@ -29,6 +29,7 @@ async function run() {
 
     const database = client.db("hire_loop_db");
     const jobsCollection = database.collection("job");
+    const companyCollection = database.collection("company");
 
     // ✅ FIXED ROUTE (THIS IS THE ONLY CORRECT WAY)
     app.post("/jobs", async (req, res) => {
@@ -50,6 +51,29 @@ async function run() {
       }
       const jobs=await jobsCollection.find(query).toArray();
       res.send(jobs);
+    });
+
+
+    // Company routes is here
+    app.get("/api/my/companies",async(req,res)=>{
+
+      const query={};
+    
+      if(req.query.recruiterId){
+        query.recruiterId=req.query.recruiterId;
+      }
+     
+      const result = await companyCollection.findOne(query);
+      res.send(result);
+    })
+    app.post("/api/companies", async (req, res) => {
+      try {
+        const newCompany = req.body;
+        const result = await companyCollection.insertOne(newCompany);
+        res.send(result);
+      } catch (err) {
+        res.status(500).send({ error: err.message });
+      }
     });
 
     console.log("MongoDB connected successfully");
