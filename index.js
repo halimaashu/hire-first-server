@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = 5000;
@@ -30,45 +30,72 @@ async function run() {
     const database = client.db("hire_loop_db");
     const jobsCollection = database.collection("job");
     const companyCollection = database.collection("company");
+    const userCollection = database.collection("user");
+    //  jobs related api
+    app.get("/api/allJobs", async (req, res) => {
+      const result = await jobsCollection.find().skip(64).toArray();
+      res.send(result);
+    });
+    // find by unique id
+    app.get("/api/allJobs/:id", async (req, res) => {
+      
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await jobsCollection.findOne(query);
+      console.log(result,"::::::::::::::::::::::::")
+
+      res.send(result);
+    });
+  
+    
 
     // ✅ FIXED ROUTE (THIS IS THE ONLY CORRECT WAY)
     app.post("/jobs", async (req, res) => {
       try {
-        const newJob = req.body;
+        const job = req.body;
+        const newJob = {
+          ...job,
+          createDate: new Date(),
+        };
         const result = await jobsCollection.insertOne(newJob);
         res.send(result);
       } catch (err) {
         res.status(500).send({ error: err.message });
       }
     });
-    app.get("/api/jobs",async (req,res)=>{
-      const query={};
-      if(req.query.companyId){
-        query.companyId=req.query.companyId;
+    app.get("/api/jobs", async (req, res) => {
+      const query = {};
+      if (req.query.companyId) {
+        query.companyId = req.query.companyId;
       }
-      if(req.query.status){
-        query.status=req.query.status;
+      if (req.query.status) {
+        query.status = req.query.status;
       }
-      const jobs=await jobsCollection.find(query).toArray();
+      const jobs = await jobsCollection.find(query).toArray();
       res.send(jobs);
     });
 
-
     // Company routes is here
-    app.get("/api/my/companies",async(req,res)=>{
+    app.get("/api/my/companies", async (req, res) => {
+      const query = {};
 
-      const query={};
-    
-      if(req.query.recruiterId){
-        query.recruiterId=req.query.recruiterId;
+      if (req.query.recruiterId) {
+        query.recruiterId = req.query.recruiterId;
       }
-     
+
       const result = await companyCollection.findOne(query);
-      res.send(result);
-    })
+      // console.log(result,"on the _________-----")
+      res.send(result || {});
+    });
     app.post("/api/companies", async (req, res) => {
       try {
-        const newCompany = req.body;
+        const company = req.body;
+        const newCompany = {
+          ...company,
+          createDate: new Date(),
+        };
         const result = await companyCollection.insertOne(newCompany);
         res.send(result);
       } catch (err) {
