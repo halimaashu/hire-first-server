@@ -31,6 +31,7 @@ async function run() {
     const jobsCollection = database.collection("job");
     const companyCollection = database.collection("company");
     const userCollection = database.collection("user");
+    const applicationsCollection = database.collection("applications");
     //  jobs related api
     app.get("/api/allJobs", async (req, res) => {
       const result = await jobsCollection.find().skip(64).toArray();
@@ -38,18 +39,39 @@ async function run() {
     });
     // find by unique id
     app.get("/api/allJobs/:id", async (req, res) => {
-      
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
 
       const result = await jobsCollection.findOne(query);
-      console.log(result,"::::::::::::::::::::::::")
+     
 
       res.send(result);
     });
-  
-    
+
+    // Application related Api
+    app.get("/api/applications",async(req,res)=>{
+      const query={};
+      if(req.query.jobId){
+        query.jobId=req.query.jobId
+      }
+      if(req.query.applicantId){
+        query.applicantId=req.query.applicantId
+      }
+      const cursor=applicationsCollection.find(query)
+      const result=await cursor.toArray()
+      // console.log(result,";;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+      res.send(result)
+    })
+    app.post("/api/applications", async (req, res) => {
+      const applicationData = await req.body;
+      const application = {
+        ...applicationData,
+        applicationDate: new Date(),
+      };
+      const result = await applicationsCollection.insertOne(application);
+      res.send(result);
+    });
 
     // ✅ FIXED ROUTE (THIS IS THE ONLY CORRECT WAY)
     app.post("/jobs", async (req, res) => {
